@@ -1,0 +1,1783 @@
+variables
+{
+	global:
+		0: B_ShowWelcomeMessage
+		1: B_ShowOperatorInfoHUD
+		2: B_OperatorEnabled
+		4: V_GameTime
+		6: B_FriendlyModeEnabled
+		10: B_TeleportEnabled
+
+	player:
+		0: B_HasOperatorRights
+		1: B_IsInOperatorMode
+		2: I_CurrentActionID
+		3: B_CreateNewHUD
+		4: HUD_CurrentOperatorHUD
+		5: B_WelcomeMessageSeen
+		6: B_IsInThirdPerson
+		8: B_IsPhasedOut
+		12: HUD_ModeratorSideHUD
+		13: B_IsAFK
+		14: B_InFriendlyMode
+		15: I_FriendlyModeCooldown
+		16: B_IsInvisible
+		17: B_IsControllingPlayer
+		18: P_ControlledPlayer
+		19: B_IsModerator
+		22: Eff_TargetEffect
+		24: Y_FacingVar
+}
+
+disabled rule("SIMPLE OWNER UTILS by Nexter#21535 (Release 1/3/161119) // Special credits at the end")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+}
+
+disabled rule("DO NOT CHANGE ANY BELOW (unless you know what you are doing)")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+}
+
+rule("SETTINGS Match time")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Set Global Variable(V_GameTime, 30);
+	}
+}
+
+rule("SETTINGS Teleport")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Set Global Variable(B_TeleportEnabled, False);
+	}
+}
+
+rule("GLOBAL Set Match Time")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Set Match Time(Multiply(Global Variable(V_GameTime), 60));
+	}
+}
+
+rule("GLOBAL Teleport (ROSTYAGT)")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Global Variable(B_TeleportEnabled) == True;
+		Is Button Held(Event Player, Interact) == True;
+		Is Button Held(Event Player, Crouch) == False;
+		Is Dead(Event Player) == False;
+		Has Status(Event Player, Hacked) == False;
+		Has Status(Event Player, Frozen) == False;
+		Has Status(Event Player, Knocked Down) == False;
+		Has Status(Event Player, Asleep) == False;
+		Is Communicating Any Emote(Event Player) == False;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, Y_FacingVar, Facing Direction Of(Event Player));
+		Teleport(Event Player, Add(Position Of(Event Player), Multiply(Facing Direction Of(Event Player), 12.500)));
+		Set Facing(Event Player, Player Variable(Event Player, Y_FacingVar), To World);
+		Apply Impulse(Event Player, Up, 5, To World, Cancel Contrary Motion);
+		Wait(0.750, Ignore Condition);
+	}
+}
+
+rule("GLOBAL Disable game completion and announcer (ROSTYAGT)")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Disable Built-In Game Mode Announcer;
+		Disable Built-In Game Mode Completion;
+	}
+}
+
+rule("GLOBAL Declare match draw (ROSTYAGT)")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Match Time == 0;
+	}
+
+	actions
+	{
+		Declare Match Draw;
+	}
+}
+
+rule("GLOBAL Welcome Message")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_WelcomeMessageSeen) == False;
+		Has Spawned(Event Player) == True;
+		disabled Global Variable(B_ShowWelcomeMessage) == True;
+	}
+
+	actions
+	{
+		Wait(2, Ignore Condition);
+		Big Message(Event Player, String("{0} {1}", String("Welcome", Null, Null, Null), Event Player, Null));
+		Wait(1.500, Ignore Condition);
+		disabled Small Message(Event Player, Custom String("Hold CTRL + space to enter friendly mode", Null, Null, Null));
+		Small Message(Event Player, Custom String("Hold CTRL + SPACE + F to change view", Null, Null, Null));
+		disabled Small Message(Event Player, Custom String("Press F to teleport", Null, Null, Null));
+		Set Player Variable(Event Player, B_WelcomeMessageSeen, True);
+	}
+}
+
+rule("GLOBAL Game operator HUD")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		disabled Global Variable(B_ShowOperatorInfoHUD) == True;
+	}
+
+	actions
+	{
+		Create HUD Text(All Players(All Teams), Null, Custom String("Game operator", Null, Null, Null), String("{0} {1}", Hero Icon String(
+			Hero Of(Host Player)), Host Player, Null), Right, 0, White, Orange, White, Visible To and String, Default Visibility);
+	}
+}
+
+rule("OPERATOR Give operator to host player")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Event Player == Host Player;
+		disabled Global Variable(B_OperatorEnabled) == True;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, B_HasOperatorRights, True);
+	}
+}
+
+rule("OPERATOR Enter operator mode")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_HasOperatorRights) == True;
+		Is Button Held(Event Player, Crouch) == True;
+		Is Button Held(Event Player, Jump) == False;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, B_IsInOperatorMode, True);
+		Set Player Variable(Event Player, B_CreateNewHUD, True);
+		Wait(0.800, Abort When False);
+		disabled Small Message(Event Player, Custom String("operator mode - press F to change actions", Null, Null, Null));
+	}
+}
+
+rule("OPERATOR Leave operator mode")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_HasOperatorRights) == True;
+		Is Button Held(Event Player, Crouch) == False;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, B_IsInOperatorMode, False);
+		Destroy HUD Text(Player Variable(Event Player, HUD_CurrentOperatorHUD));
+	}
+}
+
+rule("OPERATOR Switch actions")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Interact) == True;
+		Is Button Held(Event Player, Jump) == False;
+	}
+
+	actions
+	{
+		Modify Player Variable(Event Player, I_CurrentActionID, Add, 1);
+		Set Player Variable(Event Player, B_CreateNewHUD, True);
+	}
+}
+
+rule("OPERATOR Disable abilities in operator mode")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Player Variable(Event Player, I_CurrentActionID) != 0;
+	}
+
+	actions
+	{
+		Disallow Button(Event Player, Primary Fire);
+		Disallow Button(Event Player, Secondary Fire);
+		Disallow Button(Event Player, Ability 1);
+		Disallow Button(Event Player, Ability 2);
+		Disallow Button(Event Player, Ultimate);
+		Set Status(Event Player, Null, Phased Out, 9999);
+	}
+}
+
+rule("OPERATOR Enable abilities")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_IsInOperatorMode) == False;
+	}
+
+	actions
+	{
+		Allow Button(Event Player, Primary Fire);
+		Allow Button(Event Player, Secondary Fire);
+		Allow Button(Event Player, Ability 1);
+		Allow Button(Event Player, Ability 2);
+		Allow Button(Event Player, Ultimate);
+		Clear Status(Event Player, Phased Out);
+		Destroy Effect(Player Variable(Event Player, Eff_TargetEffect));
+	}
+}
+
+rule("OPERATOR Operator mode HUD I")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Player Variable(Event Player, B_CreateNewHUD) == True;
+		Player Variable(Event Player, I_CurrentActionID) <= 6;
+	}
+
+	actions
+	{
+		Destroy HUD Text(Player Variable(Event Player, HUD_CurrentOperatorHUD));
+		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 0), 2);
+		Create HUD Text(Event Player, Custom String("Action: Null", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
+			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 1), 2);
+		Create HUD Text(Event Player, Custom String("Action: Kill / Heal", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
+			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 2), 2);
+		Create HUD Text(Event Player, Custom String("Action: Teleport", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
+			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 3), 2);
+		Create HUD Text(Event Player, Custom String("Action: Freeze", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
+			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 4), 2);
+		Create HUD Text(Event Player, Custom String("Action: Phase out", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
+			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 5), 2);
+		Create HUD Text(Event Player, Custom String("Action: Knock down", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
+			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 6), 2);
+		Create HUD Text(Event Player, Custom String("Action: Hack", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
+			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+		Set Player Variable(Event Player, B_CreateNewHUD, False);
+	}
+}
+
+rule("OPERATOR Operator mode HUD II")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Player Variable(Event Player, B_CreateNewHUD) == True;
+		Player Variable(Event Player, I_CurrentActionID) > 6;
+	}
+
+	actions
+	{
+		Destroy HUD Text(Player Variable(Event Player, HUD_CurrentOperatorHUD));
+		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 7), 2);
+		Create HUD Text(Event Player, Custom String("Action: Control player", Null, Null, Null), Custom String("Action ID", Null, Null,
+			Null), Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String,
+			Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 8), 2);
+		Create HUD Text(Event Player, Custom String("Action: Slow Motion", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
+			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 9), 2);
+		Create HUD Text(Event Player, Custom String("Action: Invisibility", Null, Null, Null), Custom String("Action ID", Null, Null,
+			Null), Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String,
+			Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 10), 2);
+		Create HUD Text(Event Player, Custom String("Action: Give OP Rights", Null, Null, Null), Custom String("Action ID", Null, Null,
+			Null), Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String,
+			Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+		Set Player Variable(Event Player, B_CreateNewHUD, False);
+	}
+}
+
+rule("OPERATOR Loop mode ID")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 11;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, I_CurrentActionID, 0);
+		Create HUD Text(Event Player, Custom String("Action: Null", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
+			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
+	}
+}
+
+rule("OPERATOR Target HUD")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Create HUD Text(Filtered Array(Event Player, Compare(Player Variable(Event Player, B_IsInOperatorMode), ==, True)), String(
+			"{0} {1}", Hero Icon String(Hero Of(Player Closest To Reticle(Event Player, All Teams))), Player Closest To Reticle(
+			Event Player, All Teams), Null), Custom String("Health", Null, Null, Null), String("{0}%", Multiply(100, Normalized Health(
+			Player Closest To Reticle(Event Player, All Teams))), Null, Null), Left, 2, Sky Blue, Red, Red, Visible To and String,
+			Default Visibility);
+	}
+}
+
+rule("OPERATOR Players Indicators")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Create In-World Text(Filtered Array(All Players(All Teams), Compare(Player Variable(Current Array Element, B_IsInOperatorMode), ==,
+			True)), String("{0}: {1}", Hero Icon String(Hero Of(Event Player)), Event Player, Null), Add(Position Of(Event Player), Vector(
+			0, 2.800, 0)), 1, Do Not Clip, Visible To Position and String, White, Visible Never);
+	}
+}
+
+rule("OPERATOR Target Effect")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+	}
+
+	actions
+	{
+		Create Effect(Filtered Array(Event Player, Compare(Player Variable(Event Player, B_IsInOperatorMode), ==, True)), Good Aura,
+			Orange, Player Closest To Reticle(Event Player, All Teams), 1, Visible To Position and Radius);
+		Set Player Variable(Event Player, Eff_TargetEffect, Last Created Entity);
+	}
+}
+
+rule("CAMERA Default 3rd person")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Start Camera(Event Player, Add(Add(Add(Event Player, World Vector Of(Vector(0, 0.399, -0.700), Event Player, Rotation)), Multiply(
+			Up, 1.500)), Multiply(Facing Direction Of(Event Player), -2.250)), Add(Event Player, Multiply(Facing Direction Of(
+			Event Player), 100)), 70);
+		Set Player Variable(Event Player, B_IsInThirdPerson, True);
+	}
+}
+
+rule("CAMERA Toggle 1rd person")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_IsInThirdPerson) == True;
+		Is Button Held(Event Player, Interact) == True;
+		Is Button Held(Event Player, Jump) == True;
+		Is Button Held(Event Player, Crouch) == True;
+	}
+
+	actions
+	{
+		Wait(0.300, Abort When False);
+		Stop Camera(Event Player);
+		Set Player Variable(Event Player, B_IsInThirdPerson, False);
+	}
+}
+
+rule("CAMERA Toggle 3rd person")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_IsInThirdPerson) == False;
+		Is Button Held(Event Player, Interact) == True;
+		Is Button Held(Event Player, Crouch) == True;
+		Is Button Held(Event Player, Jump) == True;
+	}
+
+	actions
+	{
+		Wait(0.300, Abort When False);
+		Start Camera(Event Player, Add(Add(Add(Event Player, World Vector Of(Vector(0, 0.399, -0.700), Event Player, Rotation)), Multiply(
+			Up, 1.500)), Multiply(Facing Direction Of(Event Player), -2.250)), Add(Event Player, Multiply(Facing Direction Of(
+			Event Player), 100)), 70);
+		Set Player Variable(Event Player, B_IsInThirdPerson, True);
+	}
+}
+
+rule("MODES [1] Kill target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 1;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Secondary Fire) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Bad Pickup Effect, Red, Player Closest To Reticle(Event Player, All Teams), 1);
+		Kill(Player Closest To Reticle(Event Player, All Teams), Event Player);
+		disabled Small Message(Event Player, String("{0} {1}", String("{0} {1}", Hero Icon String(Hero Of(Player Closest To Reticle(Event Player,
+			All Teams))), Player Closest To Reticle(Event Player, All Teams), Null), Custom String("has been slain", Null, Null, Null),
+			Null));
+		disabled Small Message(Player Closest To Reticle(Event Player, All Teams), String("{0} {1}", Event Player, Custom String("slew you", Null,
+			Null, Null), Null));
+	}
+}
+
+rule("MODES [1] Kill all")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 1;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 2) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Bad Pickup Effect, Red, Player Closest To Reticle(Event Player, All Teams), 1);
+		Kill(All Players(All Teams), Event Player);
+	}
+}
+
+rule("MODES [1] Heal target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 1;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Primary Fire) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Good Pickup Effect, Yellow, Player Closest To Reticle(Event Player, All Teams), 1);
+		Resurrect(Player Closest To Reticle(Event Player, All Teams));
+		Small Message(Event Player, String("{0} {1}", String("{0} {1}", Hero Icon String(Hero Of(Player Closest To Reticle(Event Player,
+			All Teams))), Player Closest To Reticle(Event Player, All Teams), Null), Custom String("has been healed", Null, Null, Null),
+			Null));
+		disabled Small Message(Player Closest To Reticle(Event Player, All Teams), String("{0} {1}", Event Player, Custom String("healed you", Null,
+			Null, Null), Null));
+	}
+}
+
+rule("MODES [1] Heal all")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 1;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 1) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Ring Explosion, Orange, Event Player, 3);
+		Resurrect(All Players(All Teams));
+		disabled Small Message(Event Player, Custom String("All players have been healed", Null, Null, Null));
+		disabled Small Message(All Players(All Teams), String("{0} {1}", Event Player, Custom String("healed you", Null, Null, Null), Null));
+	}
+}
+
+rule("MODES [1] Kill self")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 1;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Damage Received(Event Player, 100);
+		Wait(0.200, Abort When False);
+		Play Effect(All Players(All Teams), Bad Pickup Effect, Red, Event Player, 1);
+		Kill(Event Player, Event Player);
+	}
+}
+
+rule("MODES [1] Heal self")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 1;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+		Is Dead(Event Player) == True;
+	}
+
+	actions
+	{
+		Wait(0.200, Abort When False);
+		Play Effect(All Players(All Teams), Good Pickup Effect, Yellow, Event Player, 1);
+		Resurrect(Event Player);
+		disabled Small Message(Event Player, Custom String("You have been healed", Null, Null, Null));
+	}
+}
+
+rule("MODES [2] Teleport to target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 2;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Primary Fire) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Ring Explosion Sound, Red, Event Player, 80);
+		Teleport(Event Player, Player Closest To Reticle(Event Player, All Teams));
+		Small Message(Event Player, String("{0} {1}", Custom String("Teleported to", Null, Null, Null), Player Closest To Reticle(
+			Event Player, All Teams), Null));
+		Small Message(Player Closest To Reticle(Event Player, All Teams), String("{0} {1}", Event Player, Custom String(
+			"teleported to you", Null, Null, Null), Null));
+	}
+}
+
+rule("MODES [2] Teleport target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 2;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Secondary Fire) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Ring Explosion Sound, Red, Player Closest To Reticle(Event Player, All Teams), 80);
+		Teleport(Player Closest To Reticle(Event Player, All Teams), Event Player);
+		Resurrect(Player Closest To Reticle(Event Player, All Teams));
+		Small Message(Event Player, String("{0} {1}", String("{0} {1}", Hero Icon String(Hero Of(Player Closest To Reticle(Event Player,
+			All Teams))), Player Closest To Reticle(Event Player, All Teams), Null), Custom String("teleported", Null, Null, Null), Null));
+		Small Message(Player Closest To Reticle(Event Player, All Teams), String("{0} {1}", Event Player, Custom String("teleported you",
+			Null, Null, Null), Null));
+	}
+}
+
+rule("MODES [2] Teleport all")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 2;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 1) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Ring Explosion, Orange, Event Player, 3);
+		Teleport(All Players(All Teams), Event Player);
+		Play Effect(All Players(All Teams), Ring Explosion Sound, Red, Player Closest To Reticle(Event Player, All Teams), 160);
+		Small Message(Event Player, Custom String("All players teleported", Null, Null, Null));
+		Small Message(All Players(All Teams), String("{0} {1}", Event Player, Custom String("teleported you", Null, Null, Null), Null));
+	}
+}
+
+rule("MODES [3] Freeze target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 3;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Primary Fire) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Bad Explosion, Red, Player Closest To Reticle(Event Player, All Teams), 1);
+		Set Status(Player Closest To Reticle(Event Player, All Teams), Event Player, Frozen, 9999);
+		Small Message(Event Player, String("{0} {1}", String("{0} {1}", Hero Icon String(Hero Of(Player Closest To Reticle(Event Player,
+			All Teams))), Player Closest To Reticle(Event Player, All Teams), Null), Custom String("has been frozen", Null, Null, Null),
+			Null));
+		disabled Small Message(Player Closest To Reticle(Event Player, All Teams), String("{0} {1}", Event Player, Custom String("froze you", Null,
+			Null, Null), Null));
+	}
+}
+
+rule("MODES [3] Unfreeze target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 3;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Secondary Fire) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Good Explosion, Yellow, Player Closest To Reticle(Event Player, All Teams), 1);
+		Clear Status(Player Closest To Reticle(Event Player, All Teams), Frozen);
+	}
+}
+
+rule("MODES [3] Freeze all")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 3;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 1) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Ring Explosion, Orange, Event Player, 3);
+		Set Status(Remove From Array(All Players(All Teams), Event Player), Event Player, Frozen, 9999);
+		Small Message(Event Player, Custom String("All players have been frozen", Null, Null, Null));
+		disabled Small Message(Remove From Array(All Players(All Teams), Event Player), String("{0} {1}", Event Player, Custom String("froze you",
+			Null, Null, Null), Null));
+	}
+}
+
+rule("MODES [3] Unfreeze all")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 3;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 2) == True;
+	}
+
+	actions
+	{
+		Clear Status(All Players(All Teams), Frozen);
+	}
+}
+
+rule("MODES [3] Freeze self")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 3;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+		Has Status(Event Player, Frozen) == False;
+	}
+
+	actions
+	{
+		Wait(0.100, Abort When False);
+		Play Effect(All Players(All Teams), Bad Explosion, Red, Event Player, 1);
+		Set Status(Event Player, Event Player, Frozen, 9999);
+		Small Message(Event Player, Custom String("You have been frozen", Null, Null, Null));
+	}
+}
+
+rule("MODES [3] Unfreeze self")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 3;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+		Has Status(Event Player, Frozen) == True;
+	}
+
+	actions
+	{
+		Wait(0.100, Abort When False);
+		Play Effect(All Players(All Teams), Bad Explosion, Red, Event Player, 1);
+		Clear Status(Event Player, Frozen);
+	}
+}
+
+rule("MODES [4] Phase out target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 4;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Primary Fire) == True;
+		Player Variable(Player Closest To Reticle(Event Player, All Teams), B_IsPhasedOut) == False;
+		Player Variable(Player Closest To Reticle(Event Player, All Teams), B_IsAFK) == False;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Ring Explosion, Purple, Player Closest To Reticle(Event Player, All Teams), 1);
+		Set Status(Player Closest To Reticle(Event Player, All Teams), Event Player, Phased Out, 9999);
+		Small Message(Event Player, String("{0} {1}", String("{0} {1}", Hero Icon String(Hero Of(Player Closest To Reticle(Event Player,
+			All Teams))), Player Closest To Reticle(Event Player, All Teams), Null), Custom String("is now phased out", Null, Null, Null),
+			Null));
+		Small Message(Player Closest To Reticle(Event Player, All Teams), String("{0} {1}", Event Player, Custom String(
+			"made you phased out", Null, Null, Null), Null));
+		Set Player Variable(Player Closest To Reticle(Event Player, All Teams), B_IsPhasedOut, True);
+	}
+}
+
+rule("MODES [4] Remove phase out target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 4;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Secondary Fire) == True;
+		Player Variable(Player Closest To Reticle(Event Player, All Teams), B_IsPhasedOut) == True;
+	}
+
+	actions
+	{
+		Clear Status(Player Closest To Reticle(Event Player, All Teams), Phased Out);
+		Small Message(Event Player, String("{0} {1}", String("{0} {1}", Hero Icon String(Hero Of(Player Closest To Reticle(Event Player,
+			All Teams))), Player Closest To Reticle(Event Player, All Teams), Null), Custom String("is no longer phased out", Null, Null,
+			Null), Null));
+		Small Message(Player Closest To Reticle(Event Player, All Teams), Custom String("You are no longer phased out", Null, Null, Null));
+		Set Player Variable(Player Closest To Reticle(Event Player, All Teams), B_IsPhasedOut, False);
+	}
+}
+
+rule("MODES [4] Phase out self")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 4;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+		disabled Player Variable(Event Player, B_IsPhasedOut) == False;
+		Player Variable(Event Player, B_IsAFK) == False;
+	}
+
+	actions
+	{
+		Wait(0.350, Abort When False);
+		Play Effect(All Players(All Teams), Ring Explosion, Purple, Event Player, 1);
+		Set Status(Event Player, Event Player, Phased Out, 9999);
+		Small Message(Event Player, Custom String("You are now phased out", Null, Null, Null));
+		disabled Set Player Variable(Event Player, B_IsPhasedOut, True);
+	}
+}
+
+rule("MODES [4] Remove phase out self")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 4;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+		disabled Player Variable(Event Player, B_IsPhasedOut) == True;
+		Has Status(Event Player, Phased Out) == True;
+	}
+
+	actions
+	{
+		Wait(0.350, Abort When False);
+		Clear Status(Event Player, Phased Out);
+		disabled Set Player Variable(Event Player, B_IsPhasedOut, False);
+	}
+}
+
+rule("MODES [5] Knock target down")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 5;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Primary Fire) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Bad Explosion, Red, Player Closest To Reticle(Event Player, All Teams), 1);
+		Set Status(Player Closest To Reticle(Event Player, All Teams), Event Player, Knocked Down, 9999);
+		Small Message(Event Player, String("{0} {1}", String("{0} {1}", Hero Icon String(Hero Of(Player Closest To Reticle(Event Player,
+			All Teams))), Player Closest To Reticle(Event Player, All Teams), Null), Custom String("has been knocked down", Null, Null,
+			Null), Null));
+		disabled Small Message(Player Closest To Reticle(Event Player, All Teams), String("{0} {1}", Event Player, Custom String("knocked you down",
+			Null, Null, Null), Null));
+	}
+}
+
+rule("MODES [5] Undo knock down target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 5;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Secondary Fire) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Good Explosion, Yellow, Player Closest To Reticle(Event Player, All Teams), 1);
+		Clear Status(Player Closest To Reticle(Event Player, All Teams), Knocked Down);
+	}
+}
+
+rule("MODES [5] Knock all players down")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 5;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 1) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Ring Explosion, Orange, Event Player, 3);
+		Set Status(Remove From Array(All Players(All Teams), Event Player), Event Player, Knocked Down, 9999);
+		Small Message(Event Player, Custom String("All players have been knocked down", Null, Null, Null));
+		disabled Small Message(Remove From Array(All Players(All Teams), Event Player), String("{0} {1}", Event Player, Custom String(
+			"knocked you down", Null, Null, Null), Null));
+	}
+}
+
+rule("MODES [5] Undo knock all players down")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 5;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 2) == True;
+	}
+
+	actions
+	{
+		Clear Status(All Players(All Teams), Knocked Down);
+	}
+}
+
+rule("MODES [5] Knock down self")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 5;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+		Has Status(Event Player, Knocked Down) == False;
+	}
+
+	actions
+	{
+		Wait(0.100, Abort When False);
+		Play Effect(All Players(All Teams), Bad Explosion, Red, Event Player, 1);
+		Set Status(Event Player, Event Player, Knocked Down, 9999);
+		Small Message(Event Player, Custom String("You have been knocked down", Null, Null, Null));
+	}
+}
+
+rule("MODES [5] Undo knock down self")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 5;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+		Has Status(Event Player, Knocked Down) == True;
+	}
+
+	actions
+	{
+		Wait(0.100, Abort When False);
+		Play Effect(All Players(All Teams), Bad Explosion, Red, Event Player, 1);
+		Clear Status(Event Player, Knocked Down);
+	}
+}
+
+rule("MODES [6] Hack target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 6;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Primary Fire) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Bad Explosion, Red, Player Closest To Reticle(Event Player, All Teams), 1);
+		Set Status(Player Closest To Reticle(Event Player, All Teams), Event Player, Hacked, 9999);
+		Small Message(Event Player, String("{0} {1}", String("{0} {1}", Hero Icon String(Hero Of(Player Closest To Reticle(Event Player,
+			All Teams))), Player Closest To Reticle(Event Player, All Teams), Null), Custom String("has been hacked", Null, Null, Null),
+			Null));
+		disabled Small Message(Player Closest To Reticle(Event Player, All Teams), String("{0} {1}", Event Player, Custom String("hacked you", Null,
+			Null, Null), Null));
+	}
+}
+
+rule("MODES [6] Unhack target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 6;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Secondary Fire) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Good Explosion, Yellow, Player Closest To Reticle(Event Player, All Teams), 1);
+		Clear Status(Player Closest To Reticle(Event Player, All Teams), Hacked);
+	}
+}
+
+rule("MODES [6] Hack all")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 6;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 1) == True;
+	}
+
+	actions
+	{
+		Play Effect(All Players(All Teams), Ring Explosion, Orange, Event Player, 3);
+		Set Status(Remove From Array(All Players(All Teams), Event Player), Event Player, Hacked, 9999);
+		Small Message(Event Player, Custom String("All players have been hacked", Null, Null, Null));
+		disabled Small Message(Remove From Array(All Players(All Teams), Event Player), String("{0} {1}", Event Player, Custom String("hacked you",
+			Null, Null, Null), Null));
+	}
+}
+
+rule("MODES [6] Unhack all")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 6;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 2) == True;
+	}
+
+	actions
+	{
+		Clear Status(All Players(All Teams), Hacked);
+	}
+}
+
+rule("MODES [6] Hack Self")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 6;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+	}
+
+	actions
+	{
+		Small Message(Event Player, Custom String("You cannot hack yourself", Null, Null, Null));
+	}
+}
+
+rule("MODES [7] Control Taget On")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 7;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Primary Fire) == True;
+		Player Variable(Event Player, B_IsControllingPlayer) == False;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, P_ControlledPlayer, Player Closest To Reticle(Event Player, All Teams));
+		Set Player Variable(Event Player, B_IsControllingPlayer, True);
+	}
+}
+
+rule("MODES [7] Control Taget Off")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 7;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Secondary Fire) == True;
+		Player Variable(Event Player, B_IsControllingPlayer) == True;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, B_IsControllingPlayer, False);
+	}
+}
+
+rule("MODES [7] Launch Taget")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 7;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 1) == True;
+		Player Variable(Event Player, B_IsControllingPlayer) == True;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, B_IsControllingPlayer, False);
+		Apply Impulse(Player Variable(Event Player, P_ControlledPlayer), Facing Direction Of(Event Player), 50, To World,
+			Cancel Contrary Motion);
+	}
+}
+
+rule("GLOBAL Control Players [GENERATES LAGS]")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, B_IsControllingPlayer) == True;
+	}
+
+	actions
+	{
+		Abort If Condition Is False;
+		Wait(0.020, Ignore Condition);
+		Teleport(Player Variable(Event Player, P_ControlledPlayer), World Vector Of(Vector(X Component Of(Event Player), Divide(Subtract(
+			Vertical Facing Angle Of(Event Player), Multiply(Vertical Facing Angle Of(Event Player), 2)), 10), Add(Z Component Of(
+			Event Player), 5)), Event Player, Rotation And Translation));
+		Loop If Condition Is True;
+	}
+}
+
+rule("MODES [8] Slow motion on")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 8;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 1) == True;
+	}
+
+	actions
+	{
+		Big Message(All Players(All Teams), Custom String("Slow motion enabled", Null, Null, Null));
+		Set Slow Motion(50);
+	}
+}
+
+rule("MODES [8] Slow motion off")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 8;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ability 2) == True;
+	}
+
+	actions
+	{
+		Big Message(All Players(All Teams), Custom String("Slow motion disabled", Null, Null, Null));
+		Set Slow Motion(100);
+	}
+}
+
+rule("MODES [9] Invisibility target")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 9;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Primary Fire) == True;
+	}
+
+	actions
+	{
+		Skip If(Compare(Player Variable(Player Closest To Reticle(Event Player, All Teams), B_IsInvisible), ==, True), 5);
+		Set Invisible(Player Closest To Reticle(Event Player, All Teams), All);
+		Set Player Variable(Player Closest To Reticle(Event Player, All Teams), B_IsInvisible, True);
+		Small Message(Filtered Array(All Players(All Teams), Compare(Player Variable(Event Player, B_HasOperatorRights), ==, True)),
+			String("{0} {1}", String("{0} {1}", Hero Icon String(Hero Of(Player Closest To Reticle(Event Player, All Teams))),
+			Player Closest To Reticle(Event Player, All Teams), Null), Custom String("is now invisible", Null, Null, Null), Null));
+		Small Message(Player Closest To Reticle(Event Player, All Teams), String("{0} {1}", Event Player, Custom String(
+			"made you invisible", Null, Null, Null), Null));
+		Abort;
+		Skip If(Compare(Player Variable(Player Closest To Reticle(Event Player, All Teams), B_IsInvisible), ==, False), 4);
+		Set Invisible(Player Closest To Reticle(Event Player, All Teams), None);
+		Set Player Variable(Player Closest To Reticle(Event Player, All Teams), B_IsInvisible, False);
+		Small Message(Filtered Array(All Players(All Teams), Compare(Player Variable(Event Player, B_HasOperatorRights), ==, True)),
+			String("{0} {1}", String("{0} {1}", Hero Icon String(Hero Of(Player Closest To Reticle(Event Player, All Teams))),
+			Player Closest To Reticle(Event Player, All Teams), Null), Custom String("is no longer invisible", Null, Null, Null), Null));
+		Small Message(Player Closest To Reticle(Event Player, All Teams), String("{0} {1}", Event Player, Custom String("made you visible",
+			Null, Null, Null), Null));
+	}
+}
+
+rule("MODES [9] Invisibility self")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 9;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+	}
+
+	actions
+	{
+		Skip If(Compare(Player Variable(Event Player, B_IsInvisible), ==, True), 3);
+		Set Invisible(Event Player, All);
+		Set Player Variable(Event Player, B_IsInvisible, True);
+		Abort;
+		Skip If(Compare(Player Variable(Event Player, B_IsInvisible), ==, False), 2);
+		Set Invisible(Event Player, None);
+		Set Player Variable(Event Player, B_IsInvisible, False);
+	}
+}
+
+rule("GLOBAL Infinite ultimates")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Ultimate Charge Percent(Event Player) != 100;
+		Has Spawned(Event Player) == True;
+		Player Variable(Event Player, B_HasOperatorRights) == True;
+	}
+
+	actions
+	{
+		Set Ultimate Charge(Event Player, 100);
+	}
+}
+
+rule("MODES [10] Give operator rights")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 10;
+		Is Button Held(Event Player, Primary Fire) == True;
+		Event Player == Host Player;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+	}
+
+	actions
+	{
+		Set Player Variable(Player Closest To Reticle(Event Player, All Teams), B_HasOperatorRights, True);
+		Small Message(Event Player, String("{0} {1}", Player Closest To Reticle(Event Player, All Teams), Custom String(
+			"received operator powers", Null, Null, Null), Null));
+		Set Player Variable(Player Closest To Reticle(Event Player, All Teams), B_IsModerator, True);
+	}
+}
+
+rule("MODES [10] Remove operator rights")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_CurrentActionID) == 10;
+		Is Button Held(Event Player, Secondary Fire) == True;
+		Event Player == Host Player;
+		Player Variable(Player Closest To Reticle(Event Player, All Teams), B_HasOperatorRights) == True;
+		Player Variable(Event Player, B_IsInOperatorMode) == True;
+	}
+
+	actions
+	{
+		Set Player Variable(Player Closest To Reticle(Event Player, All Teams), B_HasOperatorRights, False);
+		Small Message(Event Player, String("{0} {1}", Player Closest To Reticle(Event Player, All Teams), Custom String(
+			"lost operator powers", Null, Null, Null), Null));
+		Set Player Variable(Player Closest To Reticle(Event Player, All Teams), B_IsModerator, False);
+		Destroy HUD Text(Player Variable(Player Closest To Reticle(Event Player, All Teams), HUD_ModeratorSideHUD));
+	}
+}
+
+disabled rule("FRIENDLY Cooldown")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_FriendlyModeCooldown) != 0;
+		disabled Global Variable(B_FriendlyModeEnabled) == True;
+	}
+
+	actions
+	{
+		Chase Player Variable At Rate(Event Player, I_FriendlyModeCooldown, 0, 1, Destination and Rate);
+	}
+}
+
+disabled rule("FRIENDLY Enter Friendly Mode")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, I_FriendlyModeCooldown) == 0;
+		Is Button Held(Event Player, Crouch) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+		Player Variable(Event Player, B_InFriendlyMode) == False;
+		Player Variable(Event Player, B_IsPhasedOut) == False;
+		disabled Global Variable(B_FriendlyModeEnabled) == True;
+	}
+
+	actions
+	{
+		Wait(1.500, Abort When False);
+		Small Message(All Players(All Teams), String("{0} {1} {2}", Hero Icon String(Hero Of(Event Player)), Event Player, Custom String(
+			"entered friendly mode", Null, Null, Null)));
+		Set Damage Received(Event Player, 0);
+		Disallow Button(Event Player, Primary Fire);
+		Disallow Button(Event Player, Secondary Fire);
+		Disallow Button(Event Player, Ability 1);
+		Disallow Button(Event Player, Ability 2);
+		Disallow Button(Event Player, Ultimate);
+		Set Damage Dealt(Event Player, 0);
+		Set Player Variable(Event Player, B_InFriendlyMode, True);
+	}
+}
+
+disabled rule("FRIENDLY Leave Friendly Mode")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Crouch) == True;
+		Is Button Held(Event Player, Ultimate) == True;
+		Player Variable(Event Player, B_InFriendlyMode) == True;
+		disabled Global Variable(B_FriendlyModeEnabled) == True;
+	}
+
+	actions
+	{
+		Wait(1.500, Abort When False);
+		Small Message(All Players(All Teams), String("{0} {1} {2}", Hero Icon String(Hero Of(Event Player)), Event Player, Custom String(
+			"left friendly mode", Null, Null, Null)));
+		Set Damage Dealt(Event Player, 100);
+		Set Damage Received(Event Player, 100);
+		Clear Status(Event Player, Phased Out);
+		Allow Button(Event Player, Primary Fire);
+		Allow Button(Event Player, Secondary Fire);
+		Allow Button(Event Player, Ability 1);
+		Allow Button(Event Player, Ability 2);
+		Allow Button(Event Player, Ultimate);
+		Set Player Variable(Event Player, B_InFriendlyMode, False);
+		Set Player Variable(Event Player, I_FriendlyModeCooldown, 45);
+	}
+}
+
+disabled rule("FRIENDLY Indicator")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		disabled Global Variable(B_FriendlyModeEnabled) == True;
+	}
+
+	actions
+	{
+		Create In-World Text(Filtered Array(All Players(All Teams), Compare(Player Variable(Event Player, B_InFriendlyMode), ==, True)),
+			Custom String("friendly", Null, Null, Null), Event Player, 1, Clip Against Surfaces, Visible To Position and String, Green,
+			Default Visibility);
+		disabled Create Effect(Filtered Array(All Players(All Teams), Compare(Player Variable(Event Player, B_InFriendlyMode), ==, True)), Sparkles,
+			Green, Event Player, 1, Visible To Position and Radius);
+	}
+}
+
+disabled rule("Information: Third person, teleport and controlling target rules were copied and simplified from GARNE's mode.")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+}
+
+rule("CAMERA Junkrat fix  (ROSTYAGT)")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Players On Hero(Hero(Junkrat), All Teams) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Stop Camera(Event Player);
+	}
+}
