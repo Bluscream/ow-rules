@@ -1,0 +1,4 @@
+[submodule "ow-friendly-mode"]
+	path = Friendly mode
+	url = git@github.com:Bluscream/ow-friendly-mode.git
+	branch = master
