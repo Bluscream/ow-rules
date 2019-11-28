@@ -1,0 +1,19 @@
+rule("HUD POS")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Create HUD Text(Event Player, Position Of(Event Player), String("Position", Null, Null, Null), Custom String("PLAYER", Null,
+			Null, Null), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Position Of(Closest Player To(Event Player, All Teams)), String("Position", Null, Null, Null),
+			Custom String("Closest Player", Null, Null, Null), Left, 2, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Position Of(Farthest Player From(Event Player, All Teams)), String("Position", Null, Null, Null),
+			Custom String("Farthest Player", Null, Null, Null), Left, 3, White, White, White, Visible To and String, Default Visibility);
+	}
+}
