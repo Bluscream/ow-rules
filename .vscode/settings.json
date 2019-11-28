@@ -1,12 +1,10 @@
 {
-    "settings": {
-        "json.schemas": [
-          {
-            "fileMatch": [
-              "*.info.json"
-            ],
-            "url": "../../info.schema.json"
-          }
-        ]
+  "settings": {
+    "json.schemas": [
+      {
+        "fileMatch": ["*.info.json"],
+        "url": "../../info.schema.json"
       }
+    ]
+  }
 }
