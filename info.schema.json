@@ -1,0 +1,120 @@
+{
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://example.com/root.json",
+    "type": "object",
+    "title": "The Root Schema",
+    "required": [
+      "name",
+      "description",
+      "version",
+      "maps",
+      "authors",
+      "urls",
+      "workshop-code"
+    ],
+    "properties": {
+      "name": {
+        "$id": "#/properties/name",
+        "type": "string",
+        "title": "The Name Schema",
+        "default": "",
+        "examples": [
+          " Friendly Mode by IRLININ [1P/3P] [GER]"
+        ],
+        "pattern": "^(.*)$"
+      },
+      "description": {
+        "$id": "#/properties/description",
+        "type": "string",
+        "title": "The Description Schema",
+        "default": "",
+        "examples": [
+          "● FRIENDLY MODE v.1.252 [Settings For \"Blizz. World\" Map] ● | Hi :) \"IRLININ\" is the original creator of THIS mode. | Join my Discord server: https://discord.gg/DH4pVG5 (All controls, workshop codes and other information about my modes in this server) | Have fun ♥ :)"
+        ],
+        "pattern": "^(.*)$"
+      },
+      "version": {
+        "$id": "#/properties/version",
+        "type": "string",
+        "title": "The Version Schema",
+        "default": "",
+        "examples": [
+          "1.252"
+        ],
+        "pattern": "^(.*)$"
+      },
+      "maps": {
+        "$id": "#/properties/maps",
+        "type": "array",
+        "title": "The Maps Schema",
+        "items": {
+          "$id": "#/properties/maps/items",
+          "type": "string",
+          "title": "The Items Schema",
+          "default": "",
+          "examples": [
+            "Blizzard Word"
+          ],
+          "pattern": "^(.*)$"
+        }
+      },
+      "authors": {
+        "$id": "#/properties/authors",
+        "type": "array",
+        "title": "The Authors Schema",
+        "items": {
+          "$id": "#/properties/authors/items",
+          "type": "string",
+          "title": "The Items Schema",
+          "default": "",
+          "examples": [
+            "IRLININ"
+          ],
+          "pattern": "^(.*)$"
+        }
+      },
+      "urls": {
+        "$id": "#/properties/urls",
+        "type": "object",
+        "title": "The Urls Schema",
+        "required": [
+          "support",
+          "git"
+        ],
+        "properties": {
+          "support": {
+            "$id": "#/properties/urls/properties/support",
+            "type": "string",
+            "title": "The Support Schema",
+            "default": "",
+            "examples": [
+              "https://discord.gg/DH4pVG5"
+            ],
+            "pattern": "^(.*)$"
+          },
+          "git": {
+            "$id": "#/properties/urls/properties/git",
+            "type": "string",
+            "title": "The Git Schema",
+            "default": "",
+            "examples": [
+              "https://github.com/Bluscream/ow-friendly-mode"
+            ],
+            "pattern": "^(.*)$"
+          }
+        }
+      },
+      "workshop-code": {
+        "$id": "#/properties/workshop-code",
+        "type": "string",
+        "title": "The Workshop-code Schema",
+        "default": "",
+        "examples": [
+          "59NN7"
+        ],
+        "pattern": "^(.*)$"
+      }
+    }
+  }
+  
