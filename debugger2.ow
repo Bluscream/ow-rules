@@ -1,0 +1,175 @@
+variables
+{
+	player:
+		1: prevPos
+		2: prevFacing
+		3: rcFacingPos
+		4: rcFacingEffect
+		5: nwrcFacingPos
+		6: nwrcFacingEffect
+}
+
+rule("global init")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Create HUD Text(All Players(All Teams), Server Load, Server Load Average, Server Load Peak, Left, 0, White, Yellow, Orange,
+			Visible To and String, Default Visibility);
+	}
+}
+
+rule("player init")
+{
+	event
+	{
+		Player Joined Match;
+		All;
+		All;
+	}
+}
+
+rule("no assemble time")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Assembling Heroes == True;
+	}
+
+	actions
+	{
+		Set Match Time(0);
+	}
+}
+
+rule("cmd teleport")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Ultimate) == False;
+		Is Button Held(Event Player, Interact) == True;
+	}
+
+	actions
+	{
+		Apply Impulse(Event Player, Vector(0, 1, 0), 1, To World, Cancel Contrary Motion);
+		Set Player Variable(Event Player, prevFacing, Facing Direction Of(Event Player));
+		Teleport(Event Player, Add(Eye Position(Event Player), Multiply(Facing Direction Of(Event Player), 10)));
+		Set Facing(Event Player, Player Variable(Event Player, prevFacing), To World);
+		Wait(0.125, Ignore Condition);
+		Loop If Condition Is True;
+	}
+}
+
+rule("cmd change hero")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Ultimate) == True;
+		Is Button Held(Event Player, Interact) == True;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, prevPos, Add(Position Of(Event Player), Vector(0, 1, 0)));
+		Set Player Allowed Heroes(Event Player, Remove From Array(All Heroes, Hero Of(Event Player)));
+		Wait(0.250, Ignore Condition);
+		Set Player Allowed Heroes(Event Player, All Heroes);
+	}
+}
+
+rule("cmd spawn to prev pos")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, prevPos) != 0;
+		Has Spawned(Event Player) == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Teleport(Event Player, Player Variable(Event Player, prevPos));
+	}
+}
+
+rule("player init wc")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, rcFacingEffect, -1.000);
+		Set Player Variable(Event Player, nwrcFacingEffect, -1.000);
+		Create HUD Text(Event Player, Null, Null, Custom String("RC: {0}", Player Variable(Event Player, rcFacingPos), Null, Null), Left, 10, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Null, Null, Custom String("NW: {0}", Player Variable(Event Player, nwrcFacingPos), Null, Null), Left, 11, White, White, White, Visible To and String, Default Visibility);
+		Create In-World Text(Event Player, Custom String("RC: {0}", Player Variable(Event Player, rcFacingPos), Null, Null), Add(
+			Player Variable(Event Player, rcFacingPos), Vector(0, 0.700, 0)), 1, Do Not Clip, Visible To Position and String, White,
+			Default Visibility);
+		Create In-World Text(Event Player, Custom String("NW: {0}", Player Variable(Event Player, nwrcFacingPos), Null, Null), Add(
+			Player Variable(Event Player, nwrcFacingPos), Vector(0, 0.700, 0)), 1, Do Not Clip, Visible To Position and String, White,
+			Default Visibility);
+	}
+}
+
+rule("cmd raycast")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Primary Fire) == True;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, rcFacingPos, Ray Cast Hit Position(Eye Position(Event Player), Add(Eye Position(Event Player), Multiply(Facing Direction Of(Event Player), 100)), Null, Event Player, True));
+		Set Player Variable(Event Player, nwrcFacingPos, Nearest Walkable Position(Player Variable(Event Player, rcFacingPos)));
+		Destroy Effect(Player Variable(Event Player, rcFacingEffect));
+		Create Effect(All Players(All Teams), Sphere, Green, Player Variable(Event Player, rcFacingPos), 0.500, Visible To Position and Radius);
+		Set Player Variable(Event Player, rcFacingEffect, Last Created Entity);
+		Destroy Effect(Player Variable(Event Player, nwrcFacingEffect));
+		Create Effect(All Players(All Teams), Sphere, Red, Player Variable(Event Player, nwrcFacingPos), 0.250, Visible To Position and Radius);
+		Set Player Variable(Event Player, nwrcFacingEffect, Last Created Entity);
+	}
+}

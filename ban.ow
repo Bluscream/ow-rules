@@ -1,0 +1,41 @@
+rule("Rule 1")
+{
+	event
+	{
+		Player Joined Match;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Event Player == Custom String("Bluscream", Null, Null, Null);
+	}
+
+	actions
+	{
+		Big Message(Event Player, Custom String("Banned", Null, Null, Null));
+	}
+}
+
+rule("Rule 1")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Custom String("Bluscream", Null, Null, Null) == String("Current Player", Null, Null, Null);
+		Has Spawned(Event Player) == True;
+	}
+
+	actions
+	{
+		Big Message(All Players(All Teams), Custom String("welcome", Null, Null, Null));
+		Wait(0.500, Ignore Condition);
+	}
+}

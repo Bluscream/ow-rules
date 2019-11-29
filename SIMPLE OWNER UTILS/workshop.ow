@@ -358,32 +358,25 @@ rule("OPERATOR Operator mode HUD I")
 	{
 		Destroy HUD Text(Player Variable(Event Player, HUD_CurrentOperatorHUD));
 		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 0), 2);
-		Create HUD Text(Event Player, Custom String("Action: Null", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
-			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Custom String("Action: Null", Null, Null, Null), Custom String("Action ID", Null, Null, Null), Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
 		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
 		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 1), 2);
-		Create HUD Text(Event Player, Custom String("Action: Kill / Heal", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
-			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Custom String("Action: Kill / Heal", Null, Null, Null), Custom String("Action ID", Null, Null, Null), Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
 		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
 		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 2), 2);
-		Create HUD Text(Event Player, Custom String("Action: Teleport", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
-			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Custom String("Action: Teleport", Null, Null, Null), Custom String("Action ID", Null, Null, Null), Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
 		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
 		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 3), 2);
-		Create HUD Text(Event Player, Custom String("Action: Freeze", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
-			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Custom String("Action: Freeze", Null, Null, Null), Custom String("Action ID", Null, Null, Null), Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
 		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
 		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 4), 2);
-		Create HUD Text(Event Player, Custom String("Action: Phase out", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
-			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Custom String("Action: Phase out", Null, Null, Null), Custom String("Action ID", Null, Null, Null), Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
 		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
 		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 5), 2);
-		Create HUD Text(Event Player, Custom String("Action: Knock down", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
-			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Custom String("Action: Knock down", Null, Null, Null), Custom String("Action ID", Null, Null, Null), Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
 		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
 		Skip If(Compare(Player Variable(Event Player, I_CurrentActionID), !=, 6), 2);
-		Create HUD Text(Event Player, Custom String("Action: Hack", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
-			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Custom String("Action: Hack", Null, Null, Null), Custom String("Action ID", Null, Null, Null), Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
 		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
 		Set Player Variable(Event Player, B_CreateNewHUD, False);
 	}
@@ -448,8 +441,7 @@ rule("OPERATOR Loop mode ID")
 	actions
 	{
 		Set Player Variable(Event Player, I_CurrentActionID, 0);
-		Create HUD Text(Event Player, Custom String("Action: Null", Null, Null, Null), Custom String("Action ID", Null, Null, Null),
-			Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Custom String("Action: Null", Null, Null, Null), Custom String("Action ID", Null, Null, Null), Player Variable(Event Player, I_CurrentActionID), Left, 1, White, White, White, Visible To and String, Default Visibility);
 		Set Player Variable(Event Player, HUD_CurrentOperatorHUD, Last Text ID);
 	}
 }
