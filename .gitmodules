@@ -8,3 +8,6 @@
 [submodule "upgrade-shop"]
 	path = upgrade-shop
 	url = https://github.com/overwatchzone/upgrade-shop
+[submodule "overpy"]
+	path = overpy
+	url = https://github.com/Zezombye/overpy
