@@ -136,8 +136,10 @@ rule("player init wc")
 	{
 		Set Player Variable(Event Player, rcFacingEffect, -1.000);
 		Set Player Variable(Event Player, nwrcFacingEffect, -1.000);
-		Create HUD Text(Event Player, Null, Null, Custom String("RC: {0}", Player Variable(Event Player, rcFacingPos), Null, Null), Left, 10, White, White, White, Visible To and String, Default Visibility);
-		Create HUD Text(Event Player, Null, Null, Custom String("NW: {0}", Player Variable(Event Player, nwrcFacingPos), Null, Null), Left, 11, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Null, Null, Custom String("RC: {0}", Player Variable(Event Player, rcFacingPos), Null, Null), Left,
+			10, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Null, Null, Custom String("NW: {0}", Player Variable(Event Player, nwrcFacingPos), Null, Null), Left,
+			11, White, White, White, Visible To and String, Default Visibility);
 		Create In-World Text(Event Player, Custom String("RC: {0}", Player Variable(Event Player, rcFacingPos), Null, Null), Add(
 			Player Variable(Event Player, rcFacingPos), Vector(0, 0.700, 0)), 1, Do Not Clip, Visible To Position and String, White,
 			Default Visibility);
@@ -163,13 +165,74 @@ rule("cmd raycast")
 
 	actions
 	{
-		Set Player Variable(Event Player, rcFacingPos, Ray Cast Hit Position(Eye Position(Event Player), Add(Eye Position(Event Player), Multiply(Facing Direction Of(Event Player), 100)), Null, Event Player, True));
+		Set Player Variable(Event Player, rcFacingPos, Ray Cast Hit Position(Eye Position(Event Player), Add(Eye Position(Event Player),
+			Multiply(Facing Direction Of(Event Player), 100)), Null, Event Player, True));
 		Set Player Variable(Event Player, nwrcFacingPos, Nearest Walkable Position(Player Variable(Event Player, rcFacingPos)));
 		Destroy Effect(Player Variable(Event Player, rcFacingEffect));
-		Create Effect(All Players(All Teams), Sphere, Green, Player Variable(Event Player, rcFacingPos), 0.500, Visible To Position and Radius);
+		Create Effect(All Players(All Teams), Sphere, Green, Player Variable(Event Player, rcFacingPos), 0.500,
+			Visible To Position and Radius);
 		Set Player Variable(Event Player, rcFacingEffect, Last Created Entity);
 		Destroy Effect(Player Variable(Event Player, nwrcFacingEffect));
-		Create Effect(All Players(All Teams), Sphere, Red, Player Variable(Event Player, nwrcFacingPos), 0.250, Visible To Position and Radius);
+		Create Effect(All Players(All Teams), Sphere, Red, Player Variable(Event Player, nwrcFacingPos), 0.500,
+			Visible To Position and Radius);
 		Set Player Variable(Event Player, nwrcFacingEffect, Last Created Entity);
+	}
+}
+
+rule("Rule 9")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Create HUD Text(All Players(All Teams), Custom String("{0} Players", Count Of(All Players(All Teams)), Null, Null), Null, Null,
+			Left, 0, White, White, White, Visible To and String, Default Visibility);
+	}
+}
+
+rule("Rule 10")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Ultimate Charge Percent(Event Player) != Absolute Value(100);
+		Has Spawned(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Ultimate Charge(Event Player, 100);
+	}
+}
+
+rule("Rule 11")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Ultimate) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Ultimate Ability Enabled(Event Player, False);
+		Wait(0.250, Ignore Condition);
+		Set Ultimate Ability Enabled(Event Player, True);
 	}
 }

@@ -1,6 +1,10 @@
 [submodule "ow-friendly-mode"]
 	path = Friendly Mode
 	url = https://github.com/Bluscream/ow-friendly-mode
+[submodule "ow-friendly-mode-rewrite"]
+	path = Friendly Mode (Rewrite)
+	url = https://github.com/Bluscream/ow-friendly-mode
+	branch = rewrite-owscript
 [submodule "upgrade-shop"]
 	path = upgrade-shop
 	url = https://github.com/overwatchzone/upgrade-shop
