@@ -10,6 +10,7 @@ Rulesets for Overwatch
 
 ### Script libraries
 
+- [overpy](https://github.com/Zezombye/overpy) (Python)
 - [OWScript](https://github.com/adapap/OWScript) (Python)
 - [Overwatch-Script-To-Workshop](https://github.com/ItsDeltin/Overwatch-Script-To-Workshop) (C#)
 - [Overwatch-Code](https://github.com/Groodion/Overwatch-Code) (Java)
